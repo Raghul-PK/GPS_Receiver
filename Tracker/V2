@@ -186,7 +186,7 @@ void PostToFirebase(const String & path , const String & data, HttpClient* http,
   {
     if (millis() - lastSuccessUpdate > timeoutSuccessUpdateInSecs*1000)
     {
-      Serial.println("ESP not updating to DB for a long time --> " + String(millis() - lastSuccessUpdate));
+      Serial.println("ESP not updating to DB for a long time --> " + String((millis() - lastSuccessUpdate)/1000));
       Serial.println("Restarting the board");
       ESP.restart();
     }
