@@ -49,6 +49,9 @@ void hw_wdt_enable(){
   *((volatile uint32_t*) 0x60000900) |= 1; // Hardware WDT ON
 }
 
+int timeoutSuccessUpdateInSecs = 100;
+unsigned long lastSuccessUpdate = 0;
+
 void setup()
 {  
   ESP.wdtDisable();
@@ -85,6 +88,7 @@ void loop()
 
   while (true)
   {
+    Serial.println("Time passed since start = " + String(millis()/1000) + " secs");
     Serial.println("Connecting to DB ");
     http_client.connect(FIREBASE_HOST, SSL_PORT);
 
@@ -121,7 +125,8 @@ void get_data()
   
   String FIREBASE_PATH = "/" + cur_date + "/" + cur_time + "/";
   Serial.println("Posting to DB ");
-  PostToFirebase(FIREBASE_PATH, Data, &http_client);
+  int timeGapInSecs = 10;
+  PostToFirebase(FIREBASE_PATH, Data, &http_client, timeGapInSecs);
 }
 
 // Taken from "TinyGSM" examples
@@ -142,7 +147,7 @@ static void getGPSData(unsigned long ms)
   } while (millis() - start < ms);
 }
 
-void PostToFirebase(const String & path , const String & data, HttpClient* http)
+void PostToFirebase(const String & path , const String & data, HttpClient* http, int timeGap)
 {
   String response;
   int statusCode = 0;
@@ -169,7 +174,23 @@ void PostToFirebase(const String & path , const String & data, HttpClient* http)
   statusCode = http->responseStatusCode();
   Serial.print("Status code: ");
   Serial.println(statusCode);
+  Serial.println("Time passed since start = " + String(millis()/1000) + " secs");
   Serial.println();
 
-  delay(5000);
+  // If we are not updating DB for a long time --> Restart the ESP
+  if (statusCode==200)
+  {
+    lastSuccessUpdate = millis();
+  }
+  else
+  {
+    if (millis() - lastSuccessUpdate > timeoutSuccessUpdateInSecs*1000)
+    {
+      Serial.println("ESP not updating to DB for a long time --> " + String(millis() - lastSuccessUpdate));
+      Serial.println("Restarting the board");
+      ESP.restart();
+    }
+  }
+
+  delay(timeGap*1000);
 }
