@@ -35,10 +35,17 @@ def getLatestLocation(gps_id):
 @app.route("/<string:gps_id>/journey/<string:date>/", methods=['GET'])
 def getDateJourney(gps_id, date):
     gps_id = ""  # For time being, as we don't have gps-id still in db
-    url = "https://gps-tracker2-13e30-default-rtdb.firebaseio.com/" + gps_id + (date + "/") + ".json?auth=zhw6Zkn3OQXjojhr8dDPn3OTJFdzhNk27c828puQ"
+    url = "https://gps-tracker2-13e30-default-rtdb.firebaseio.com/" + gps_id + ".json?auth=zhw6Zkn3OQXjojhr8dDPn3OTJFdzhNk27c828puQ"
     req = requests.get(url)
     json_data = json.loads(req.content)  # This is a dictionary
 
-    return json_data
+    if date in json_data:
+        # Go to the specified date
+        Date_data = json_data[date]
+        print(Date_data)
+        print(type(Date_data))
+        return Date_data
+    else:
+        return ("Date doesn't exist")
 
 app.run()
